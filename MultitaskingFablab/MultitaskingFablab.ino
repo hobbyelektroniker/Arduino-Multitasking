@@ -66,22 +66,36 @@ class Ampel : public Component {
 class BlinkLed : public Component {
   public:
 
-    int blinkDelay;
+    // Variablen (optional)
     int _pin;
+    int blinkDelay;
 
+    // Funktionen
+    void on() {
+      digitalWrite(_pin, HIGH);
+    }
+
+    void off() {
+      digitalWrite(_pin, LOW);
+    }
+
+    void blink(int delayMs) {
+      blinkDelay = delayMs;
+    }
+
+    // setup() kann auch Parameter besitzen
     void setup(int pin) {
       _pin = pin;
-      pinMode(_pin, OUTPUT);
-      digitalWrite(_pin, LOW);
-      blinkDelay = 0;
+      pinMode(_pin,OUTPUT);
+      blink(0);
+      off();
     }  
 
+    // loop() bestimmt das Verhalten
     void loop() {
       if (blinkDelay) {
         wait(blinkDelay);
         digitalWrite(_pin, !digitalRead(_pin));
-      } else {
-        digitalWrite(_pin, LOW);  
       }
     }
 };
