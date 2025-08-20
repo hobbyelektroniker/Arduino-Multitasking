@@ -1,67 +1,10 @@
 #include "arduino_multitasking.h"
 
+// Zustandskonstanten, optional, wird nur bei komplexeren Projekten benötigt
 enum States {
   AUS, GRUEN, GELB, ROT, ROT_GELB
 };
 
-class Ampel : public Component {
-  public:
-    
-    int _rot, _gelb, _gruen;
-
-    void setup(int rot, int gelb, int gruen) {
-      _rot = rot;
-      _gelb = gelb;
-      _gruen = gruen;
-      pinMode(_rot, OUTPUT);
-      pinMode(_gelb, OUTPUT);
-      pinMode(_gruen, OUTPUT);
-      state = AUS;
-    }  
-
-    void loop() {
-      switch (state) {
-
-        case AUS:
-          digitalWrite(_gruen, LOW);
-          digitalWrite(_gelb, LOW);
-          digitalWrite(_rot, LOW);
-          break;
-
-        case GRUEN:
-          digitalWrite(_gruen, HIGH);
-          digitalWrite(_gelb, LOW);
-          digitalWrite(_rot, LOW);
-          wait(6000);
-          state = GELB;
-          break;
-
-        case GELB:
-          digitalWrite(_gruen, LOW);
-          digitalWrite(_gelb, HIGH);
-          digitalWrite(_rot, LOW);
-          wait(3000);
-          state = ROT;
-          break;
-
-        case ROT:
-          digitalWrite(_gruen, LOW);
-          digitalWrite(_gelb, LOW);
-          digitalWrite(_rot, HIGH);
-          wait(8000);
-          state = ROT_GELB;
-          break;
-
-        case ROT_GELB:
-          digitalWrite(_gruen, LOW);
-          digitalWrite(_gelb, HIGH);
-          digitalWrite(_rot, HIGH);
-          wait(2000);
-          state = GRUEN;
-          break;
-      }
-    }
-};
 
 class BlinkLed : public Component {
   public:
@@ -100,27 +43,90 @@ class BlinkLed : public Component {
     }
 };
 
+class Ampel : public Component {
+  public:
+    BlinkLed rot, gelb, gruen;
+
+    void setup(int rotPin, int gelbPin, int gruenPin) {
+      rot.setup(rotPin);
+      gelb.setup(gelbPin);
+      gruen.setup(gruenPin);
+      scheduler.add(rot);
+      scheduler.add(gelb);
+      scheduler.add(gruen);
+      state = AUS;
+    }  
+
+    void loop() {
+      switch (state) {
+
+        case AUS:
+          gruen.off();
+          gelb.off();
+          rot.off();
+          break;
+
+        case ROT:
+          gruen.off();
+          gelb.off();
+          rot.on();
+          wait(8000);
+          state = ROT_GELB;
+          break;     
+
+        case ROT_GELB:
+          gruen.off();
+          gelb.on();
+          rot.on();
+          wait(2000);
+          state = GRUEN;
+          break;
+
+        case GRUEN:
+          gruen.on();
+          gelb.off();
+          rot.off();
+          wait(6000);
+          state = GELB;
+          break;
+
+        case GELB:
+          gruen.off();
+          gelb.on();
+          rot.off();
+          wait(3000);
+          state = ROT;
+          break;
+      }
+    }
+};
+
+// Komponenten erstellen
 BlinkLed roteLed;
 BlinkLed blaueLed;
 Ampel ampel;
  
 void setup() {
-  // setup der Komponenten
+  // Setup der Applikation
+  Serial.begin(9600);
+
+  // Setup der Komponenten
   roteLed.setup(2);
   blaueLed.setup(3);
   ampel.setup(11, 12, 13);
 
-  // Komponenten zum Scheduler hinzufügen
+  // Komponenten dem Scheduler hinzufügen
   scheduler.add(roteLed);
   scheduler.add(blaueLed);
   scheduler.add(ampel);
 
-  // Aufgaben verteilen
+  // Anfangszustand der Komponenten
   roteLed.blinkDelay = 500;
   blaueLed.blinkDelay = 1200;
   ampel.state = ROT;
 }
 
 void loop() {
-  scheduler.loop();
+  scheduler.loop();  // Dieser Aufruf muss immer vorhanden sein!
+  // Hier sind weitere Ergänzungen möglich
 }
