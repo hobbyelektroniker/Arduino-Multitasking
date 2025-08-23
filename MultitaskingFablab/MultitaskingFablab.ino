@@ -5,15 +5,11 @@ enum States {
   AUS, GRUEN, GELB, ROT, ROT_GELB
 };
 
-
 class BlinkLed : public Component {
   public:
-
-    // Variablen (optional)
     int _pin;
     int blinkDelay;
 
-    // Funktionen
     void on() {
       digitalWrite(_pin, HIGH);
     }
@@ -23,22 +19,19 @@ class BlinkLed : public Component {
     }
 
     void blink(int delayMs) {
-      blinkDelay = delayMs;
+      blinkDelay= delayMs;
     }
 
-    // setup() kann auch Parameter besitzen
     void setup(int pin) {
       _pin = pin;
-      pinMode(_pin,OUTPUT);
-      blink(0);
+      pinMode(_pin, OUTPUT);
       off();
     }  
 
-    // loop() bestimmt das Verhalten
     void loop() {
       if (blinkDelay) {
-        wait(blinkDelay);
         digitalWrite(_pin, !digitalRead(_pin));
+        wait(blinkDelay);
       }
     }
 };
@@ -70,8 +63,8 @@ class Ampel : public Component {
           gruen.off();
           gelb.off();
           rot.on();
-          wait(8000);
           state = ROT_GELB;
+          wait(8000);
           break;     
 
         case ROT_GELB:
@@ -96,16 +89,17 @@ class Ampel : public Component {
           rot.off();
           wait(3000);
           state = ROT;
-          break;
+          break;      
       }
     }
-};
+};    
+
 
 // Komponenten erstellen
 BlinkLed roteLed;
 BlinkLed blaueLed;
 Ampel ampel;
- 
+
 void setup() {
   // Setup der Applikation
   Serial.begin(9600);
@@ -120,7 +114,7 @@ void setup() {
   scheduler.add(blaueLed);
   scheduler.add(ampel);
 
-  // Anfangszustand der Komponenten
+  // Den Komponenten Aufgaben zuweisen
   roteLed.blinkDelay = 500;
   blaueLed.blinkDelay = 1200;
   ampel.state = ROT;
